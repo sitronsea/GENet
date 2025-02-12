@@ -86,7 +86,7 @@ def analyze_outputs(
     wandb.log({
         "local_mae": MAE_error,
         "mean_abs_local_label": mean_abs_local_label,
-        "relative_mae": MAE_error/mean_abs_local_label,
+        "relative_mae": MAE_error / mean_abs_local_label,
         "chern_acc": Correct_samples / (Correct_samples + Wrong_samples)
     })
 

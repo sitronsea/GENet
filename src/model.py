@@ -277,8 +277,8 @@ class TrNorm(GELayers):
         tr = torch.einsum("bxviic->bxvc", w)
         if self.trnorm_on_abs:
             tr_abs = torch.sqrt(
-                    tr[..., 0] ** 2 + tr[..., 1] ** 2
-                )
+                tr[..., 0] ** 2 + tr[..., 1] ** 2
+            )
             tr_abs_mean = torch.mean(tr_abs, dim=2)
 
             # clip values that are too small
@@ -295,9 +295,9 @@ class TrNorm(GELayers):
             norm_factor = torch.clamp(tr_mean_abs, min=self.threshold)
 
         w_norm = torch.einsum(
-                "bx, bxvijc->bxvijc",
-                torch.reciprocal(norm_factor), w
-                )
+            "bx, bxvijc->bxvijc",
+            torch.reciprocal(norm_factor), w
+        )
 
         return utils.repack_x(u, w_norm)
 

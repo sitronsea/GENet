@@ -111,10 +111,8 @@ class ProjectDataset(Dataset):
         self.n_bands = args.n_bands
         self.dims = args.dims
         self.samples = args.samples
-        self.diag_samples = (
-            round(args.diag_ratio * self.samples)
-            * (len(self.dims) == 2)
-        )
+        self.diag_samples = round(args.diag_ratio * self.samples) * (len(self.dims) == 2)
+
         self.label_mode = args.label_mode
         self.distribution = args.label_distribution
         self.keep_only_trivial_samples = args.keep_only_trivial_samples

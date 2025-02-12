@@ -9,7 +9,7 @@ def prefactor(n_dims):
     """
     n = n_dims // 2
     result = 1.
-    for i in range(1, n+1):
+    for i in range(1, n + 1):
         result /= i
     result /= ((2 * torch.pi) ** n)
     return result
@@ -76,13 +76,13 @@ def get_flux_series_indices(n_dims):
             return [[min(series), max(series)]]
 
         perms = []
-        for i in range(len(series)-1):
+        for i in range(len(series) - 1):
             for j in range(i + 1, len(series)):
                 current = [
                     min(series[i], series[j]),
                     max(series[i], series[j])
                 ]
-                remaining = series[:i] + series[i+1:j] + series[j+1:]
+                remaining = series[:i] + series[i + 1:j] + series[j + 1:]
                 for perm in get_ordered_perms(remaining):
                     perms.append(current + perm)
 
@@ -171,10 +171,7 @@ def random_U(*shapes, n_bands):
     """
     Generate random U(n) matrices
     """
-    A = (
-        torch.normal(0, 1, size=(*shapes, n_bands, n_bands))
-        + 1j * torch.normal(0, 1, size=(*shapes, n_bands, n_bands))
-    )
+    A = torch.normal(0, 1, size=(*shapes, n_bands, n_bands)) + 1j * torch.normal(0, 1, size=(*shapes, n_bands, n_bands))
     q, r = torch.linalg.qr(A)
 
     # Force r to have real diagonal elements to give unique decomposition.
@@ -214,9 +211,7 @@ def label_angle(num_site, distribution=None):
     """
     if distribution:
         n_partition = len(distribution)
-        label = (torch.multinomial(torch.tensor(distribution), num_site - 1)
-                 + 0.5
-                 + 0.5 * torch.randn(num_site - 1)) * 2 / (n_partition) - 1
+        label = (torch.multinomial(torch.tensor(distribution), num_site - 1) + 0.5 + 0.5 * torch.randn(num_site - 1)) * 2 / (n_partition) - 1
         label = torch.cat(
             (label, -torch.sum(label, dim=0, keepdim=True)),
             dim=0
@@ -237,7 +232,7 @@ def eig_angle(num_sites, n_bands, labels):
     eigs = torch.cat((
         eigs,
         (labels - torch.sum(eigs, dim=1)).unsqueeze(-1)
-        ), dim=1)
+    ), dim=1)
     return eigs
 
 
