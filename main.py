@@ -1,1 +1,0 @@
-# Main function. Arguments.
