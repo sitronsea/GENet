@@ -10,8 +10,6 @@ from . import data
 from . import model
 from . import utils
 
-import matplotlib.pyplot as plt
-
 
 def analyze_outputs(
     labels,
@@ -33,23 +31,6 @@ def analyze_outputs(
     global_outputs = np.sum(local_outputs, 1)
     global_outputs_rounded = np.round(global_outputs)
 
-    data = np.stack(
-        [global_labels, global_outputs, global_outputs_rounded],
-        axis=1
-    )
-
-    # Plot output histogram
-    plt.hist(
-        data,
-        bins=200,
-        label=["chern_labels", "chern_outputs", "chern_outputs_rounded"]
-    )
-    plt.xlabel("chern number")
-    plt.legend()
-    wandb.log({"chern_histogram": wandb.Image(plt)})
-    plt.savefig(os.path.join(eval_folder, save_name) + "_chern_hist.png")
-    plt.clf()
-
     correct = (global_outputs_rounded == np.round(global_labels))
     wrong = (global_outputs_rounded != np.round(global_labels))
 
@@ -60,17 +41,6 @@ def analyze_outputs(
             np.round(global_labels[wrong]) - global_outputs_rounded[wrong]
         ], axis=1
     )
-    # Plot error output histogram
-    plt.hist(
-        data_wrong,
-        bins=200,
-        label=["chern_labels_wrong", "chern_outputs_wrong", "difference"]
-    )
-    plt.xlabel("chern number")
-    plt.legend()
-    wandb.log({"chern_histogram_wrong": wandb.Image(plt)})
-    plt.savefig(os.path.join(eval_folder, save_name) + "_chern_hist_wrong.png")
-    plt.clf()
 
     # Log wrong outputs
     table_wrong = wandb.Table(
@@ -97,8 +67,8 @@ def eval(args):
     test_loader = DataLoader(test_dataset, args.batch, num_workers=4)
 
     # the model
-    net_type = getattr(model, args.net_type)
-    net = net_type(args)
+    model_type = getattr(model, args.model_type)
+    net = model_type(args)
 
     # CUDA for PyTorch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

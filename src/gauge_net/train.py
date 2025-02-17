@@ -48,24 +48,26 @@ def train(args):
     # Data loader
     # Training data
     train_dataset = data.ProjectDataset(args)
-    train_loader = DataLoader(
-        train_dataset,
-        args.batch,
-        num_workers=4
-    )
+    train_loader = DataLoader(train_dataset, args.batch, num_workers=0)
 
     # Testing data
     test_dataset = data.ProjectDataset(args)
-    test_loader = DataLoader(test_dataset, args.batch, num_workers=4)
+    test_loader = DataLoader(test_dataset, args.batch, num_workers=0)
 
     # Create the model output folder
     model_folder = os.path.join(args.output_dir, args.save_folder_nets)
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
 
+    my_dir = model_folder
+    if os.access(my_dir, os.W_OK):
+        print(f"{my_dir} is writable!")
+    else:
+        print(f"{my_dir} is NOT writable!")
+
     # The model
-    net_type = getattr(model, args.net_type)
-    net = net_type(args)
+    model_type = getattr(model, args.model_type)
+    net = model_type(args)
 
     # CUDA for PyTorch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -92,12 +94,14 @@ def train(args):
         net.train()
         current_batch = 0
         for local_batch, local_labels in train_loader:
+
             # data
             local_batch, local_labels = (
                 local_batch.to(device),
                 local_labels.to(device)
             )
             # outputs
+
             local_outputs = net(local_batch)
             if args.quantity == "global":
                 # global criterion (compared with the trivial class)
@@ -107,16 +111,15 @@ def train(args):
 
                 loss = global_loss
 
-                if args.keep_only_trivial_samples:
-                    # std criterior (to force the output to locally differ)
-                    std_outputs = torch.clamp(
-                        torch.std(local_outputs, 1),
-                        max=args.std_clamp
-                    )
-                    std_goal = torch.ones_like(std_outputs) * args.std_clamp
-                    std_loss = criterion(std_outputs, std_goal)
+                # std criterior (to force the output to locally differ)
+                std_outputs = torch.clamp(
+                    torch.std(local_outputs, 1),
+                    max=args.std_clamp
+                )
+                std_goal = torch.ones_like(std_outputs) * args.std_clamp
+                std_loss = criterion(std_outputs, std_goal)
 
-                    loss += std_loss
+                loss += std_loss
 
             else:
                 loss = criterion(local_outputs, local_labels)
@@ -133,12 +136,12 @@ def train(args):
 
         # test
         net.eval()
-        running_loss_local = 0
-        running_loss_local_rescaled = 0
-        running_loss_global = 0
-        running_loss_std = 0
-        running_std_test = 0
-        running_loss_global = 0
+        running_loss_local = 0.
+        running_loss_local_rescaled = 0.
+        running_loss_global = 0.
+        running_loss_std = 0.
+        running_std_test = 0.
+        running_loss_global = 0.
 
         with torch.no_grad():
             for local_batch, local_labels in test_loader:
@@ -148,13 +151,11 @@ def train(args):
                     local_batch.to(device),
                     local_labels.to(device)
                 )
+                global_labels = torch.sum(local_labels, 1)
 
                 # Get outputs
                 local_outputs = net(local_batch)
-                global_outputs = torch.sum(
-                    local_outputs,
-                    1
-                )
+                global_outputs = torch.sum(local_outputs, 1)
                 std_outputs = torch.std(local_outputs, 1)
                 local_outputs_rescaled = utils.rescale(
                     local_outputs,
@@ -188,7 +189,7 @@ def train(args):
                 running_loss_local_rescaled += local_loss_rescaled.item()
                 running_loss_global += global_loss.item()
                 running_loss_std += std_loss.item()
-                running_std_test += std_outputs.item()
+                running_std_test += torch.mean(std_outputs).item()
 
             mean_loss_local = running_loss_local / len(test_loader)
             mean_loss_local_rescaled = running_loss_local_rescaled / len(test_loader)
@@ -198,7 +199,7 @@ def train(args):
             mean_total_loss = (running_loss_global + running_loss_std) / len(test_loader)
 
             print(
-                "Epoch [%d]\n" % (i_epoch + 1),
+                "Epoch [%d]\n" % (i_epoch),
                 "local test loss: %.6f\n" % (mean_loss_local),
                 "local rescaled test loss: %.6f\n" % (mean_loss_local_rescaled),
                 "global test loss: %.6f\n" % (mean_loss_global),

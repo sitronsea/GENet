@@ -1,5 +1,6 @@
 # Utilities
 import torch
+import numpy as np
 
 
 # Several computation tools for grids
@@ -11,7 +12,7 @@ def prefactor(n_dims):
     result = 1.
     for i in range(1, n + 1):
         result /= i
-    result /= ((2 * torch.pi) ** n)
+    result /= ((2 * np.pi) ** n)
     return result
 
 
@@ -161,7 +162,7 @@ def complex_einsum(pattern, a, b):
 def unitary_log(W):
     W = W[..., 0] + 1j * W[..., 1]
     eig, V = torch.linalg.eig(W)
-    log_eig = torch.diag(1j * eig.angles())
+    log_eig = torch.diag_embed(1j * torch.angle(eig))
     logW = V @ log_eig @ h_conj(V)
     return torch.stack((logW.real, logW.imag), dim=-1)
 
@@ -185,7 +186,7 @@ def random_U(*shapes, n_bands):
 
 
 def random_angle(*shape):
-    return torch.rand(*shape, 1) * 2 * torch.pi - torch.pi
+    return torch.rand(*[*shape, 1, 1]) * 2 * np.pi - np.pi
 
 
 def random_phase(*shape):
@@ -258,7 +259,7 @@ def var_init(
     else:
         print("init_variant {init_variant} not known, aborting")
         raise SystemExit(1)
-    return variance
+    return torch.tensor(variance)
 
 
 def unpack_x(x, n_dims):
@@ -319,4 +320,4 @@ def rescale(outputs, labels):
     Rescale outputs based on the labels
     """
     mean_fraction = torch.mean(labels / outputs)
-    return outputs * mean_fraction, mean_fraction
+    return outputs * mean_fraction

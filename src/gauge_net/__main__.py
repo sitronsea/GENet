@@ -5,6 +5,8 @@ import torch
 import json
 import wandb
 import os
+import sys
+from pathlib import Path
 
 from . import train
 from . import eval
@@ -24,14 +26,6 @@ def parse_args():
     parser.add_argument("--name", type=str, default=None)
     parser.add_argument("--job_id", type=str, default=None)
 
-    # WandB
-    parser.add_argument(
-        "--wandb_config",
-        type=str,
-        default="WandB.json",
-        help="Directory for WandB configurations"
-    )
-    
     # Mode
     parser.add_argument(
         "--mode",
@@ -67,6 +61,12 @@ def parse_args():
         help="The size of the lattice; length must be even"
     )
     parser.add_argument(
+        "--label_mode",
+        choices=["Berry", "Wilson"],
+        default="Berry",
+        help="Wilson label or Berry label",
+    )
+    parser.add_argument(
         "--keep_only_trivial_samples",
         action="store_true",
         help="Keep only trivial samples"
@@ -100,6 +100,16 @@ def parse_args():
         help="The layer output channels of the model",
     )
     parser.add_argument(
+        "--use_unit_elements",
+        action="store_true",
+        help="Use unit matrices for GEBL and GEConv"
+    )
+    parser.add_argument(
+        "--conjugation_enlargement",
+        action="store_true",
+        help="Conjugation enlargements for GEBL and GEConv"
+    )
+    parser.add_argument(
         "--kernel_size",
         type=int,
         default=4.,
@@ -112,7 +122,7 @@ def parse_args():
         help="Dilation step of Conv Layers"
     )
     parser.add_argument(
-        "--norm_trace",
+        "--normalize_trace",
         action="store_true",
         help="Normalization of the Trace layer based on a fixed hyperparameter"
     )
@@ -121,7 +131,7 @@ def parse_args():
         action="store_true",
         help="Implement the TrNorm layers"
     )
-    parser.add_argument("--trnorm_threshold", default=1e-4)
+    parser.add_argument("--trnorm_threshold", default=1e-3)
     parser.add_argument("--trnorm_before_ReLU", action="store_true")
     parser.add_argument("--trnorm_on_abs", action="store_true")
     parser.add_argument("--residual_trace", action="store_true")
@@ -129,8 +139,8 @@ def parse_args():
     # Parameter initialization
     parser.add_argument(
         "--init_weight_factor",
-        type=int,
-        default=1,
+        type=float,
+        default=1.,
         help="The init_weight_factor"
     )
     parser.add_argument(
@@ -181,7 +191,7 @@ def parse_args():
         action="store_true",
         help="Whether to rescale outputs for evaluation"
     )
-    
+
     # Saving
     # model
     parser.add_argument(
@@ -234,12 +244,16 @@ def main():
 
     if args.seed is None:
         args.seed = torch.randint(1000, (1,))
-        
+
     torch.manual_seed(args.seed)
 
+    CURRENT_DIR = Path(__file__).resolve().parent
+    PROJECT_ROOT = CURRENT_DIR.parent
+    CONFIG_PATH = PROJECT_ROOT / "config.json"
+    config = json.load(open(CONFIG_PATH, "r"))
+
+    wandb_config = getattr(config, "wandb", None)
     # WandB outputs
-    wandb_config = json.load(open(args.wandb_config))
-    
     wandb_run = wandb.init(
         project=getattr(wandb_config, "project", None),
         entity=getattr(wandb_config, "entity", None),
@@ -248,24 +262,29 @@ def main():
         dir=getattr(wandb_config, "dir", os.getenv("WANDB_OUTPUT", "./")),
     )
     args.name = wandb_run.name
-    
+
     if args.mode == "train":
         save_name, save_extension = os.path.splitext(args.save_model_name)
         args.save_model_name = f"{save_name}_{args.name}{save_extension}"
     elif args.mode == "eval":
         args.save_eval_name += "_" + args.name
 
+    command = sys.argv[0]
     try:
-        if args.mode == "train":
+        if "train" in command:
             train.train(args)
 
-        if args.mode == "eval":
+        elif "eval" in command:
             eval.eval(args)
-            
+
+        else:
+            print("Unknown command. Use 'gauge_net_train' or 'gauge_net_eval'.")
+            sys.exit(1)
+
     except Exception:
         wandb.finish(exit_code=1)
         raise
-    
+
     wandb.finish(exit_code=0)
 
 
