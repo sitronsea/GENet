@@ -3,15 +3,20 @@ requires = ["setuptools>=40.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gauge-net"  
+name = "gauge_net"  
 version = "0.1.0"  
-description = "A description of what the gauge-net package does"  
 dependencies = [
     "torch==1.9.0",
     "numpy==1.22.0",
-    "wandb"
+    "wandb==1.19.6"
 ]  
 
 [project.scripts]
 gauge_net_train = "gauge_net.__main__:main"
 gauge_net_eval = "gauge_net.__main__:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+gauge_net = ["config.json"]

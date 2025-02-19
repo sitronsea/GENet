@@ -14,7 +14,6 @@ from . import utils
 def get_lr_scheduler(scheduler, optimizer, start_lr, total_epochs, milestones):
     if scheduler == "step":
         milestone_epochs = [round(total_epochs * ms) for ms in milestones]
-        print(milestone_epochs)
         return MultiStepLR(
             optimizer,
             milestone_epochs,
@@ -47,6 +46,8 @@ def get_lr_scheduler(scheduler, optimizer, start_lr, total_epochs, milestones):
 def train(args):
     # Data loader
     # Training data
+    torch.autograd.set_detect_anomaly(True)
+
     train_dataset = data.ProjectDataset(args)
     train_loader = DataLoader(train_dataset, args.batch, num_workers=0)
 
@@ -58,12 +59,6 @@ def train(args):
     model_folder = os.path.join(args.output_dir, args.save_folder_nets)
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
-
-    my_dir = model_folder
-    if os.access(my_dir, os.W_OK):
-        print(f"{my_dir} is writable!")
-    else:
-        print(f"{my_dir} is NOT writable!")
 
     # The model
     model_type = getattr(model, args.model_type)
@@ -199,7 +194,6 @@ def train(args):
             mean_total_loss = (running_loss_global + running_loss_std) / len(test_loader)
 
             print(
-                "Epoch [%d]\n" % (i_epoch),
                 "local test loss: %.6f\n" % (mean_loss_local),
                 "local rescaled test loss: %.6f\n" % (mean_loss_local_rescaled),
                 "global test loss: %.6f\n" % (mean_loss_global),

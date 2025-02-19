@@ -1,6 +1,20 @@
 # Utilities
+import argparse
 import torch
 import numpy as np
+
+
+# Arguments handling
+def str_to_bool(v):
+    if isinstance(v, bool):
+        return v
+    v = v.lower()
+    if v in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 # Several computation tools for grids

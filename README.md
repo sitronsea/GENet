@@ -30,39 +30,124 @@ In this repository, we provide a Python package implementing gauge equivariant n
 
 Everything is designed to ensure smooth and reproducible experimentation.
 
-We acknowledge the foundational work of the [Favoni et al.](link), whose foundational works in gauge equivariant network architectures inspired this research.
+We acknowledge [Favoni et al.](link) for their foundational works in gauge equivariant network architectures that inspired this research.
+
+This research is inspired by the foundational works in gauge equivariant network architectures of [Favoni et al.](link).
 
 ## Repository Structure
 
+Below is a simplified view of the package layout:
 
-- **`data_loader.py`**: Loads and preprocesses datasets.
-- **`model.py`**: Contains the implementation of the gauge equivariant network, including our novel normalization layer.
+```
+src/ 
+├── gauge_net/ 
+│   ├── __init__.py 
+│   ├── __main__.py 
+│   ├── data.py 
+│   ├── model.py 
+│   ├── train.py 
+│   ├── eval.py 
+│   ├── config.json
+├── setup.py
+└── pyproject.toml
+```
+
+Inside the package directory:
+
+- **`data.py`**: Generates random datas.
+- **`model.py`**: Contains the implementation of the gauge equivariant network, including our novel **'TrNorm'** layer.
 - **`train.py`**: Script to train the model.
-- **`evaluate.py`**: Script to evaluate the trained model and predict Chern numbers.
+- **`eval.py`**: Script to evaluate the trained model and predict Chern numbers.
 - **`utils.py`**: Utility functions used throughout the project.
+- **`config.json`**:Logging configurations, including WandB settings.
 
 ## How to Use
 
-### 1. Set Up Your Environment
+### 1. Environment Setup
 
-    git clone https://github.com/yourusername/your-repository-name.git
-    cd your-repository-name
-    pip install -r requirements.txt
+Clone the repository, move into the `src` directory, and install the package:
 
-### 2. Training the Model
+```bash
+git clone https://github.com/sitronsea/GEN.git
+cd src
+pip install .
+```
 
-    python train.py --config config.json
+### 2. Model Training
 
-### 3. Evaluating the Model
+#### Baseline Training
 
-    python evaluate.py --model_path /path/to/saved/model
+Start a baseline training session with:
 
-## Reproducing Our Results
+```bash
+gauge_net_train
+```
 
-To reproduce the results presented in our paper, ensure that you use the provided configuration file (`config.json`) and follow these steps:
+#### Reproducing Our Results
 
-    python train.py --config config.json
-    python evaluate.py --model_path /path/to/saved/model
+- **General GEBLNet Model**  
+  To train a GEBLNet model for 4-band insulators on a 5×5 grid and with **TrNorm** layers enabled:
+
+  ```bash
+  gauge_net_train --dims 5 5 --n_bands 4 --trnorm
+  ```
+
+  Specify layer channels with:
+
+  ```bash
+  --layer_channels 32 16 8
+  ```
+
+- **Training on Trivial Samples Only**  
+  To train using only trivial samples:
+
+  ```bash
+  gauge_net_train --dims 5 5 --n_bands 4 --trnorm --keep_only_trivial_samples
+  ```
+
+- **Setting Diagonal Sample Ratio**  
+  To specify the percentage of diagonal samples (e.g., 50%):
+
+  ```bash
+  --diag_ratio 0.5
+  ```
+
+- **Higher-Dimensional Data**  
+  For training for 3-band insulators on a 3×3×3×3 grid:
+
+  ```bash
+  gauge_net_train --dims 3 3 3 3 --n_bands 3 --trnorm
+  ```
+
+- **Alternative Model Structure**  
+  To train a model with a different architecture (e.g., GEConvNet with specified layer channels):
+
+  ```bash
+  gauge_net_train --model_type GEConvNet --layer_channels 32 16 16 8 --trnorm
+  ```
+
+### 3. Model Evaluation
+
+- **Default Evaluation**  
+  To evaluate the default trained model:
+
+  ```bash
+  gauge_net_eval --save_model_name $name
+  ```
+
+- **Evaluation with Specific Configurations**  
+  When evaluating, ensure the model configuration, number of bands and grid dimension match the training setup, while the grid size can be different. For example:
+
+  ```bash
+  gauge_net_eval --save_model_name $name --n_bands 4 --layer_channels 32 16 8 --trnorm --dims 10 10
+  ```
+
+- **Rescaling for Trivial Samples**  
+  If your model was trained on trivial samples, include a rescaling mechanism during evaluation:
+
+  ```bash
+  --rescale_eval
+  ```
 
 ## Paper and Citation
 
@@ -72,30 +157,36 @@ For more details, please refer to the paper:
 
 If you use this code in your research, please cite our work :
 
-    @inproceedings{yourpaper2023,
-      title={Gauge Equivariant Networks for Predicting Chern Numbers of Topological Insulators},
-      author={Your Name and Collaborator Name},
-      booktitle={Conference/Journal Name},
-      pages={123--130},
-      year={2023},
-      organization={Organization or Publisher}
-    }
-
-We also acknowledge the Vienna group for their foundational work on gauge equivariant network architectures.
+[bibtex]
 
 ## Acknowledgements
 
-Special thanks to the Vienna group for their pioneering contributions to gauge equivariant network design. We are also grateful to Person A and Person B for their valuable insights and support in refining the model and preparing the public release of this code.
+We would also like to express our gratitude to Oleksandr Balabanov and Hampus Linander for their original contributions to the initial development of this project. Their work laid an important foundation for our refinements and public release.
 
 ## Installation Requirements
 
-Ensure you have Python 3.x installed. Then, install the required packages:
+### Prerequisites
+Ensure you have **Python 3.8** installed.
 
-    pip install -r requirements.txt
+### Dependencies
+This project requires the following dependencies:
+- `torch==1.9.0`
+- `numpy==1.22.0`
+- `wandb`
 
-The project depends on:
+### Install Dependencies
 
-- torch
-- numpy
-- matplotlib
-- scipy
+#### Using `pip` (with `setup.py`)
+If you are installing via `setup.py`, you can run:
+
+```bash
+pip install -r requirements.txt
+```
+
+or install the package directly:
+
+```bash
+pip install .
+```
+
+

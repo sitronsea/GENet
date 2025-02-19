@@ -1,15 +1,17 @@
 # Main function. Arguments.
+import importlib
 import argparse
+
 import torch
 
 import json
 import wandb
 import os
 import sys
-from pathlib import Path
 
 from . import train
 from . import eval
+from . import utils
 
 
 def parse_args():
@@ -27,12 +29,6 @@ def parse_args():
     parser.add_argument("--job_id", type=str, default=None)
 
     # Mode
-    parser.add_argument(
-        "--mode",
-        choices=["train", "eval"],
-        default="train",
-        help="train/eval"
-    )
     parser.add_argument(
         "--quantity",
         choices=["local", "global"],
@@ -101,14 +97,17 @@ def parse_args():
     )
     parser.add_argument(
         "--use_unit_elements",
-        action="store_true",
+        type=utils.str_to_bool,
+        default=True,
         help="Use unit matrices for GEBL and GEConv"
     )
     parser.add_argument(
         "--conjugation_enlargement",
-        action="store_true",
-        help="Conjugation enlargements for GEBL and GEConv"
+        type=utils.str_to_bool,
+        default=True,
+        help="Conjugation enlargements for GEBL and GEConv. Accepts 'true' or 'false'."
     )
+
     parser.add_argument(
         "--kernel_size",
         type=int,
@@ -123,7 +122,8 @@ def parse_args():
     )
     parser.add_argument(
         "--normalize_trace",
-        action="store_true",
+        type=utils.str_to_bool,
+        default=True,
         help="Normalization of the Trace layer based on a fixed hyperparameter"
     )
     parser.add_argument(
@@ -134,7 +134,6 @@ def parse_args():
     parser.add_argument("--trnorm_threshold", default=1e-3)
     parser.add_argument("--trnorm_before_ReLU", action="store_true")
     parser.add_argument("--trnorm_on_abs", action="store_true")
-    parser.add_argument("--residual_trace", action="store_true")
 
     # Parameter initialization
     parser.add_argument(
@@ -179,7 +178,7 @@ def parse_args():
     parser.add_argument(
         "--lr_schedule_milestones",
         type=float,
-        default=[0.5, 0.75],
+        default=[1],
         nargs="*",
         help="Percentages at which the learning rate is rescheduled"
     )
@@ -247,10 +246,11 @@ def main():
 
     torch.manual_seed(args.seed)
 
-    CURRENT_DIR = Path(__file__).resolve().parent
-    PROJECT_ROOT = CURRENT_DIR.parent
-    CONFIG_PATH = PROJECT_ROOT / "config.json"
-    config = json.load(open(CONFIG_PATH, "r"))
+    with importlib.resources.path("gauge_net", "config.json") as config_path:
+        print(config_path)  # config_path is a pathlib.Path object
+
+    with open(config_path, 'r') as f:
+        config = json.load(f)
 
     wandb_config = getattr(config, "wandb", None)
     # WandB outputs
@@ -262,14 +262,15 @@ def main():
         dir=getattr(wandb_config, "dir", os.getenv("WANDB_OUTPUT", "./")),
     )
     args.name = wandb_run.name
+    
+    command = sys.argv[0]
 
-    if args.mode == "train":
+    if "train" in command:
         save_name, save_extension = os.path.splitext(args.save_model_name)
         args.save_model_name = f"{save_name}_{args.name}{save_extension}"
-    elif args.mode == "eval":
+    elif "eval" in command:
         args.save_eval_name += "_" + args.name
 
-    command = sys.argv[0]
     try:
         if "train" in command:
             train.train(args)

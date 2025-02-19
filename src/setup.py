@@ -2,14 +2,15 @@ from setuptools import find_packages
 from setuptools import setup
 
 setup(
-    name="gauge-net",
+    name="gauge_net",
     version="0.1",
     packages=find_packages(),
+    package_data={'gauge_net': ['config.json']},
     include_package_data=True,
     install_requires=[
         "torch==1.9.0",
         "numpy==1.22.0",
-        "wandb"
+        "wandb==1.19.6"
     ],
     entry_points={
         "console_scripts": [

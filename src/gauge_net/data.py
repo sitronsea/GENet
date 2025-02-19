@@ -25,7 +25,7 @@ def get_label(W, n_dims, mode):
 
 
 # Generate one random sample on the fly
-def create_sample(n_bands, dims, label_mode, keep_only_trivial_samples):
+def create_sample(n_bands, dims, label_mode="Berry", keep_only_trivial_samples=False):
     # Calculate several parameters
     num_sites = utils.site_prod(dims)
     n_dims = len(dims)

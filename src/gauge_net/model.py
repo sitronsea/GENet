@@ -276,9 +276,7 @@ class TrNorm(GELayers):
         u, w = utils.unpack_x(x, len(self.dims))
         tr = torch.einsum("bxviic->bxvc", w)
         if self.trnorm_on_abs:
-            tr_abs = torch.sqrt(
-                tr[..., 0] ** 2 + tr[..., 1] ** 2
-            )
+            tr_abs = torch.linalg.norm(tr, dim=-1)
             tr_abs_mean = torch.mean(tr_abs, dim=2)
 
             # clip values that are too small
@@ -288,10 +286,7 @@ class TrNorm(GELayers):
             tr_mean = torch.mean(tr, dim=2)
 
             # clip values that are too small
-            tr_mean_abs = torch.sqrt(
-                tr_mean[..., 0] ** 2 + tr_mean[..., 1] ** 2
-            )
-
+            tr_mean_abs = torch.linalg.norm(tr_mean, dim=-1)
             norm_factor = torch.clamp(tr_mean_abs, min=self.threshold)
 
         w_norm = torch.einsum(
@@ -475,7 +470,7 @@ class GEBLNet(torch.nn.Module):
         self.conjugation_enlargement = args.conjugation_enlargement
 
         # TrNorm layer configurations
-        self.trnorm = args.trnorm
+        self.iftrnorm = args.trnorm
         self.trnorm_threshold = args.trnorm_threshold
         self.trnorm_before_ReLU = args.trnorm_before_ReLU
         self.trnorm_on_abs = args.trnorm_on_abs
@@ -519,7 +514,7 @@ class GEBLNet(torch.nn.Module):
             self.layers.append(bl)
             self.bls.append(bl)
 
-            if self.trnorm:
+            if self.iftrnorm:
                 if self.trnorm_before_ReLU:
                     self.layers.append(self.trnorm)
                     self.layers.append(self.gerelu)
