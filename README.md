@@ -75,7 +75,7 @@ pip install .
 
 #### Baseline Training
 
-Start a baseline training session with:
+In **"setup.py"**, we introduce entry points ``gauge_net_train`` and ``gauge_net_eval``, which are equivalent to running ``python -m gauge_net``. To start a baseline training session, simply run:
 
 ```bash
 gauge_net_train
@@ -137,7 +137,7 @@ gauge_net_train
   When evaluating, ensure the model configuration, number of bands and grid dimension match the training setup, while the grid size can be different. For example:
 
   ```bash
-  gauge_net_eval --save_model_name $name --n_bands 4 --layer_channels 32 16 8 --trnorm --dims 10 10
+  gauge_net_eval --save_model_name <<filename>> --n_bands 4 --layer_channels 32 16 8 --trnorm --dims 10 10
   ```
 
 - **Rescaling for Trivial Samples**  
