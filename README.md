@@ -24,15 +24,13 @@ This repository contains the code accompanying our paper:
 
 In this repository, we provide a Python package implementing gauge equivariant networks for predicting topological invariants (e.g., Chern numbers) in multiband topological insulators. The code features:
 
- - A gauge equivariant normalization layer (**"TrNorm"**) to stabilize training.
+ - A gauge equivariant normalization layer (**"TrNorm"**) for to stabilize training of lattice gauge equivariant networks.
  - Scripts for data generation, model building, training, and evaluation.
  - Configurations for ablation studies to explore performance under different settings.
 
 Everything is designed to ensure smooth and reproducible experimentation.
 
-We acknowledge [Favoni et al.](link) for their foundational works in gauge equivariant network architectures that inspired this research.
-
-This research is inspired by the foundational works in gauge equivariant network architectures of [Favoni et al.](link).
+Our model architecture extends the LGE-CNNs introduced in [Favoni et al.](link_to_paper) and our implementation is based on the [LGE-CNN reference implementation](https://gitlab.com/openpixi/lge-cnn/-/tree/master).
 
 ## Repository Structure
 
@@ -132,7 +130,7 @@ gauge_net_train
   To evaluate the default trained model:
 
   ```bash
-  gauge_net_eval --save_model_name $name
+  gauge_net_eval --save_model_name <<filename>>
   ```
 
 - **Evaluation with Specific Configurations**  
@@ -161,7 +159,7 @@ If you use this code in your research, please cite our work :
 
 ## Acknowledgements
 
-We would also like to express our gratitude to Oleksandr Balabanov and Hampus Linander for their original contributions to the initial development of this project. Their work laid an important foundation for our refinements and public release.
+We would also like to express our gratitude to Oleksandr Balabanov, Hampus Linander and Jan Gerken for their contributions to the initial version of this code.
 
 ## Installation Requirements
 
