@@ -151,11 +151,21 @@ gauge_net_train
 
 For more details, please refer to the paper:
 
-[Link to the paper](link-to-your-paper)
+[arXiv:2502.15376](https://arxiv.org/abs/2502.15376).
 
 If you use this code in your research, please cite our work :
 
-[bibtex]
+```latex
+@misc{huang2025learningchernnumberstopological,
+      title={Learning Chern Numbers of Topological Insulators with Gauge Equivariant Neural Networks}, 
+      author={Longde Huang and Oleksandr Balabanov and Hampus Linander and Mats Granath and Daniel Persson and Jan E. Gerken},
+      year={2025},
+      eprint={2502.15376},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2502.15376}, 
+}
+```
 
 ## Acknowledgements
 
