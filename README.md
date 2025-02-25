@@ -30,7 +30,7 @@ In this repository, we provide a Python package implementing gauge equivariant n
 
 Everything is designed to ensure smooth and reproducible experimentation.
 
-Our model architecture extends the LGE-CNNs introduced in [Favoni et al.](link_to_paper) and our implementation is based on the [LGE-CNN reference implementation](https://gitlab.com/openpixi/lge-cnn/-/tree/master).
+Our model architecture extends the LGE-CNNs introduced in [Favoni et al.](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.032003) and our implementation is based on the [LGE-CNN reference implementation](https://gitlab.com/openpixi/lge-cnn/-/tree/master).
 
 ## Repository Structure
 
