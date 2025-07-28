@@ -10,7 +10,7 @@ setup(
     install_requires=[
         "torch==1.9.0",
         "numpy==1.22.0",
-        "wandb==1.19.6"
+        "wandb"
     ],
     entry_points={
         "console_scripts": [

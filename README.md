@@ -24,15 +24,13 @@ This repository contains the code accompanying our paper:
 
 In this repository, we provide a Python package implementing gauge equivariant networks for predicting topological invariants (e.g., Chern numbers) in multiband topological insulators. The code features:
 
- - A gauge equivariant normalization layer (**"TrNorm"**) to stabilize training.
+ - A gauge equivariant normalization layer (**"TrNorm"**) for to stabilize training of lattice gauge equivariant networks.
  - Scripts for data generation, model building, training, and evaluation.
  - Configurations for ablation studies to explore performance under different settings.
 
 Everything is designed to ensure smooth and reproducible experimentation.
 
-We acknowledge [Favoni et al.](link) for their foundational works in gauge equivariant network architectures that inspired this research.
-
-This research is inspired by the foundational works in gauge equivariant network architectures of [Favoni et al.](link).
+Our model architecture extends the LGE-CNNs introduced in [Favoni et al.](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.032003) and our implementation is based on the [LGE-CNN reference implementation](https://gitlab.com/openpixi/lge-cnn/-/tree/master).
 
 ## Repository Structure
 
@@ -77,7 +75,7 @@ pip install .
 
 #### Baseline Training
 
-Start a baseline training session with:
+In **"setup.py"**, we introduce entry points ``gauge_net_train`` and ``gauge_net_eval``, which are equivalent to running ``python -m gauge_net``. To start a baseline training session, simply run:
 
 ```bash
 gauge_net_train
@@ -132,14 +130,14 @@ gauge_net_train
   To evaluate the default trained model:
 
   ```bash
-  gauge_net_eval --save_model_name $name
+  gauge_net_eval --save_model_name <<filename>>
   ```
 
 - **Evaluation with Specific Configurations**  
   When evaluating, ensure the model configuration, number of bands and grid dimension match the training setup, while the grid size can be different. For example:
 
   ```bash
-  gauge_net_eval --save_model_name $name --n_bands 4 --layer_channels 32 16 8 --trnorm --dims 10 10
+  gauge_net_eval --save_model_name <<filename>> --n_bands 4 --layer_channels 32 16 8 --trnorm --dims 10 10
   ```
 
 - **Rescaling for Trivial Samples**  
@@ -153,15 +151,25 @@ gauge_net_train
 
 For more details, please refer to the paper:
 
-[Link to the paper](link-to-your-paper)
+[arXiv:2502.15376](https://arxiv.org/abs/2502.15376).
 
 If you use this code in your research, please cite our work :
 
-[bibtex]
+```latex
+@misc{huang2025learningchernnumberstopological,
+      title={Learning Chern Numbers of Topological Insulators with Gauge Equivariant Neural Networks}, 
+      author={Longde Huang and Oleksandr Balabanov and Hampus Linander and Mats Granath and Daniel Persson and Jan E. Gerken},
+      year={2025},
+      eprint={2502.15376},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2502.15376}, 
+}
+```
 
 ## Acknowledgements
 
-We would also like to express our gratitude to Oleksandr Balabanov and Hampus Linander for their original contributions to the initial development of this project. Their work laid an important foundation for our refinements and public release.
+We would also like to express our gratitude to Oleksandr Balabanov, Hampus Linander and Jan Gerken for their contributions to the initial version of this code.
 
 ## Installation Requirements
 

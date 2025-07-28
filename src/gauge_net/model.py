@@ -1,4 +1,6 @@
 # Layers and network
+# This implementation is based on the original LGE-CNN code at
+# https://gitlab.com/openpixi/lge-cnn/-/blob/72e770b4fa052731170db9b22459e407cc20a780/lge_cnn/nn/layers.py
 import torch
 from torch import nn
 from . import utils
