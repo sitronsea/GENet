@@ -2,6 +2,7 @@
 import torch
 import numpy as np
 from torch.utils.data.dataset import Dataset
+from itertools import product
 
 from . import utils
 
@@ -100,6 +101,78 @@ def create_sample_diag(
     return data_batch, label
 
 
+def create_sample_hamiltonian(
+    n_bands,
+    dims
+):
+    Kx = dims[0]
+    Ky = dims[1]
+    N = 2 * n_bands
+    Gamma = torch.diag(torch.tensor([1] * n_bands + [-1] * n_bands)) + 1j * torch.zeros(N, N)
+    def random_Hcoeff(n_bands):
+        A_real = torch.normal(0, 1, size=(n_bands, n_bands))
+        A_imag = torch.normal(0, 1, size=(n_bands, n_bands))
+        return 0.5 * (A_real + A_real.T + 1j * (A_imag - A_imag.T))
+    def create_random_hamiltonian():
+        pi = torch.pi
+        P = 3
+        
+        kx = torch.linspace(-pi, pi, Kx)
+        ky = torch.linspace(-pi, pi, Ky)
+        kx_grid, ky_grid = torch.meshgrid(kx, ky, indexing='ij') 
+
+        H = 1j * torch.zeros(Kx, Ky, N, N)
+
+        for px in range(-P, P + 1):
+            for py in range(-P, P + 1):
+                if max(abs(px), abs(py)) == 0:
+                    continue 
+                
+                phase = px * kx_grid + py * ky_grid 
+
+                A_p = random_Hcoeff(N)
+                B_p = random_Hcoeff(N)
+
+                sin_term = torch.sin(phase)[..., None, None] * A_p
+                cos_term = torch.cos(phase)[..., None, None] * B_p
+
+                H += sin_term + cos_term
+
+        H = H - Gamma @ H @ Gamma
+
+        return H
+    
+    Hm = create_random_hamiltonian()
+    eigvals, eigvecs = torch.linalg.eigh(Hm)
+    eigvecs = eigvecs.conj().transpose(-1, -2)
+    occ_mask = eigvals < 0                                
+    n_val = occ_mask.sum(-1).max().item()
+    assert n_val == n_bands, "Wrong number of occupied bands"
+    idx = eigvals.argsort(dim=-1)[..., :n_bands]           # 每个 k 取能量最低 n_bands
+    V = torch.gather(eigvecs, -2, idx.unsqueeze(-2).expand(-1, -1, eigvecs.size(-1), -1))
+    U_x = V.conj().transpose(-1, -2) @ torch.roll(V, shifts=-1, dims=0)
+    U_y = V.conj().transpose(-1, -2) @ torch.roll(V, shifts=-1, dims=1)
+    U_x, _ = torch.linalg.qr(U_x)
+    U_y, _ = torch.linalg.qr(U_y)
+    data_U = torch.stack((U_x, U_y), dim=2)
+    data_W = U_x @ torch.roll(U_y, shifts=-1, dims=0) @ torch.roll(U_x, shifts=-1, dims=1).conj().transpose(-1, -2) @ U_y.conj().transpose(-1, -2)
+    data_W = data_W.unsqueeze(2)
+    def prefactor(n_dims):
+        """
+        Prefactor for calculating higher dimensional Chern numbers
+        """
+        n = n_dims // 2
+        result = 1.
+        for i in range(1, n + 1):
+            result /= i
+        result /= ((2 * torch.pi) ** n)
+        return result
+    data_batch = torch.cat((data_U, data_W), dim=2).view(-1, 3, n_bands, n_bands)
+    data_batch = torch.stack((data_batch.real, data_batch.imag), dim=-1)
+    label = get_label(data_batch[:, 2].unsqueeze(1), n_dims=2, mode="Berry")
+    return data_batch, label
+
+
 class ProjectDataset(Dataset):
     """
         Generates the data on the fly
@@ -134,5 +207,24 @@ class ProjectDataset(Dataset):
                 label_mode=self.label_mode,
                 keep_only_trivial_samples=self.keep_only_trivial_samples
             )
+
+        return data, label.float()
+
+
+class HamiltonianDataset(Dataset):
+    def __init__(self, args):
+        super().__init__()
+        self.n_bands = args.n_bands
+        self.dims = args.dims
+        self.samples = args.samples
+
+    def __len__(self):
+        return self.samples
+
+    def __getitem__(self, idx):
+        data, label = create_sample_hamiltonian(
+            n_bands=self.n_bands,
+            dims=self.dims,
+        )
 
         return data, label.float()

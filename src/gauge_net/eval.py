@@ -17,14 +17,14 @@ def analyze_outputs(
     eval_folder,
     save_name
 ):
-    # Calculate MAE
-    print("LOCAL MAE ERROR: ")
-    MAE_error = np.mean(np.abs(labels.reshape(-1) - local_outputs.reshape(-1)))
-    print(MAE_error)
+    # # Calculate MAE
+    # print("LOCAL MAE ERROR: ")
+    # MAE_error = np.mean(np.abs(labels.reshape(-1) - local_outputs.reshape(-1)))
+    # print(MAE_error)
 
-    print("MEAN ABSOLUTE LOCAL LABEL: ")
-    mean_abs_local_label = np.mean(np.abs(labels.reshape(-1)))
-    print(mean_abs_local_label)
+    # print("MEAN ABSOLUTE LOCAL LABEL: ")
+    # mean_abs_local_label = np.mean(np.abs(labels.reshape(-1)))
+    # print(mean_abs_local_label)
 
     # Calculate global output
     global_labels = labels
@@ -54,16 +54,19 @@ def analyze_outputs(
     print("Correct: ", Correct_samples, "Wrong: ", Wrong_samples)
 
     wandb.log({
-        "local_mae": MAE_error,
-        "mean_abs_local_label": mean_abs_local_label,
-        "relative_mae": MAE_error / mean_abs_local_label,
+        # "local_mae": MAE_error,
+        # "mean_abs_local_label": mean_abs_local_label,
+        # "relative_mae": MAE_error / mean_abs_local_label,
         "chern_acc": Correct_samples / (Correct_samples + Wrong_samples)
     })
 
 
 def eval(args):
     # loaders
-    test_dataset = data.ProjectDataset(args)
+    if args.hamiltonian_samples:
+        test_dataset = data.HamiltonianDataset(args)
+    else:
+        test_dataset = data.ProjectDataset(args)
     test_loader = DataLoader(test_dataset, args.batch, num_workers=4)
 
     # the model
@@ -100,6 +103,7 @@ def eval(args):
 
             labels = torch.sum(local_labels, 1)
             local_outputs = net(local_batch)
+            outputs = local_outputs
             if args.rescale_eval:
                 outputs = utils.rescale(local_outputs, local_labels)
 

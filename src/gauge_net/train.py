@@ -64,9 +64,11 @@ def train(args):
     model_type = getattr(model, args.model_type)
     net = model_type(args)
 
+
     # CUDA for PyTorch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.to(device)
+    print(device)
 
     # optimizer and criterion
     criterion = torch.nn.L1Loss()

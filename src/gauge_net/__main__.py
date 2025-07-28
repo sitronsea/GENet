@@ -85,11 +85,25 @@ def parse_args():
     parser.add_argument(
         "--model_type",
         type=str,
-        choices=["GEBLNet", "GEConvNet", "TrFCNet"],
+        choices=["GEBLNet", "GEConvNet", "TrFCNet", 'DeepEig'],
         default="GEBLNet"
     )
     parser.add_argument(
         "--layer_channels",
+        type=int,
+        default=[32, 16, 8],
+        nargs="*",
+        help="The layer output channels of the model",
+    )    
+    parser.add_argument(
+        "--deepchannels",
+        type=int,
+        default=[32, 16, 8],
+        nargs="*",
+        help="The layer output channels of the model",
+    )    
+    parser.add_argument(
+        "--eigchannels",
         type=int,
         default=[32, 16, 8],
         nargs="*",
@@ -184,7 +198,10 @@ def parse_args():
     )
 
     # Evaluating
-
+    parser.add_argument(
+        "--hamiltonian_samples",
+        action="store_true"
+    )
     parser.add_argument(
         "--rescale_eval",
         action="store_true",

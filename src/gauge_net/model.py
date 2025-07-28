@@ -1,5 +1,6 @@
 # Layers and network
 import torch
+from torch import nn
 from . import utils
 # Below are the notations we use:
 
@@ -436,7 +437,7 @@ class ComplexLinear(torch.nn.Module):
         )
 
     def forward(self, x):
-        return utils.complex_mul(self.weight, x) + self.bias
+        return utils.complex_einsum('uv,bxv->bxu', self.weight, x) + self.bias
 
 
 class ComplexAct(torch.nn.Module):
@@ -444,9 +445,50 @@ class ComplexAct(torch.nn.Module):
         super().__init__()
 
     def forward(self, x):
-        return torch.sigmoid(x[..., 0]) * x
+        return torch.sigmoid(x[..., 0]).unsqueeze(-1) * x
 
 
+class ComplexMLP(torch.nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.layers = torch.nn.ModuleList()
+        for idx, _ in enumerate(channels[:-2]):
+            self.layers.append(ComplexLinear(channels[idx], channels[idx + 1]))
+            self.layers.append(ComplexAct())
+        self.layers.append(ComplexLinear(channels[-2], channels[-1]))
+   
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+            # print(x.shape)
+        return x
+ 
+ 
+class MLP(nn.Module):
+    def __init__(self, channels):
+        """
+        Multi-Layer Perceptron with flexible channel sizes.
+        
+        Args:
+            channels (list): List of integers specifying input size, hidden sizes, and output size.
+                             Example: [input_dim, hidden1_dim, hidden2_dim, ..., output_dim]
+        """
+        super(MLP, self).__init__()
+        
+        layers = []
+        for in_dim, out_dim in zip(channels[:-1], channels[1:]):
+            layers.append(nn.Linear(in_dim, out_dim))
+            layers.append(nn.ReLU())
+        
+        # Remove the last ReLU for the output layer
+        layers = layers[:-1]
+        
+        self.network = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.network(x)
+               
+            
 # Models
 class GEBLNet(torch.nn.Module):
     def __init__(self, args):
@@ -691,3 +733,45 @@ class TrMLP(torch.nn.Module):
             x = layer(x)
 
         return x
+
+
+class DeepEig(torch.nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.dims = args.dims
+        self.n_bands = args.n_bands
+        self.eigchannels = [2] + args.eigchannels
+        self.deepchannels = [self.eigchannels[-1]] + args.deepchannels + [1]
+        self.eignet = MLP(torch.tensor(self.eigchannels))
+        self.deepnet = MLP(torch.tensor(self.deepchannels))
+   
+    def forward(self, x):
+        x = self.Diag(x)
+        b, s, i, c = x.shape
+        x = x.view(-1, i, c)
+        # print(x.shape)
+        y = self.eignet(x[..., 0, :])
+        # print(y)
+        for idx in range(1, x.shape[-2]):
+            y += self.eignet(x[..., idx, :])
+        # print(y.shape)
+        y = self.deepnet(y)
+        y = y.view(b, s)
+        # print(y.shape)
+        return y
+    
+    def Diag(self, matrix):
+        matrix = matrix[:, :, 2]
+        real_part = matrix[..., 0]
+        imag_part = matrix[..., 1]
+        complex_matrix = torch.complex(real_part, imag_part)
+
+        # Perform diagonalization
+        eigenvalues, _ = torch.linalg.eig(complex_matrix)  # Shape: (b, v, i)
+        diag_matrix = eigenvalues
+
+        # Combine to bvij2 form
+        eigenvalue_matrix = torch.stack([diag_matrix.real, diag_matrix.imag], dim=-1)
+
+        return eigenvalue_matrix
+

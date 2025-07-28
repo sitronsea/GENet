@@ -199,6 +199,29 @@ def random_U(*shapes, n_bands):
     return torch.stack((q.real, q.imag), dim=-1)
 
 
+def random_Hcoeff(n_bands):
+    A_real = torch.normal(0, 1, size=(n_bands, n_bands))
+    A_imag = torch.normal(0, 1, size=(n_bands, n_bands))
+    return 0.5 * (A_real + A_real.T + 1j * (A_imag - A_imag.T))
+
+
+def random_U_single(n_bands):
+    """
+    Generate random U(n) matrices
+    """
+    A = torch.normal(0, 1, size=(n_bands, n_bands)) + 1j * torch.normal(0, 1, size=(n_bands, n_bands))
+    q, r = torch.linalg.qr(A)
+
+    # Force r to have real diagonal elements to give unique decomposition.
+    diag_r = torch.diagonal(r, dim1=-2, dim2=-1)
+    phase = diag_r / torch.abs(diag_r)
+    phase[torch.isnan(phase)] = 1 + 0j
+    phase_diag = torch.diag_embed(torch.conj(phase))
+    q = q @ phase_diag
+
+    return q
+
+
 def random_angle(*shape):
     return torch.rand(*[*shape, 1, 1]) * 2 * np.pi - np.pi
 
